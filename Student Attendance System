@@ -102,15 +102,15 @@ public class Main {
         int studentId;
         try {
             studentId = sc.nextInt();
-            sc.nextLine(); // consume newline
+            sc.nextLine(); 
         } catch (InputMismatchException e) {
             System.out.println(RED + "Invalid student ID. Please enter a number." + RESET);
-            sc.nextLine(); // clear the invalid input
+            sc.nextLine(); 
             AddStudent();
             return;
         }
 
-        // Check if student already exists
+        
         try (BufferedReader reader = new BufferedReader(new FileReader("Student.txt"))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -121,7 +121,7 @@ public class Main {
                 }
             }
         } catch (IOException e) {
-            // File doesn't exist yet, which is fine
+           
         }
 
         System.out.print("Enter Student Name: ");
@@ -131,7 +131,7 @@ public class Main {
             writer.append("StudentID=" + studentId + ", name=" + name + "\n");
             System.out.println(GREEN + "\nStudent record added successfully!" + RESET);
 
-            // Display in table format
+            
             System.out.println(BLUE + "+------------+----------------------+");
             System.out.println("| Student ID | Student Name         |");
             System.out.println("+------------+----------------------+");
@@ -236,10 +236,10 @@ public class Main {
         int studentId;
         try {
             studentId = sc.nextInt();
-            sc.nextLine(); // consume newline
+            sc.nextLine(); 
         } catch (InputMismatchException e) {
             System.out.println(RED + "Invalid student ID. Please enter a number." + RESET);
-            sc.nextLine(); // clear the invalid input
+            sc.nextLine();
             totalPresentDays();
             return;
         }
