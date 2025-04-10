@@ -1,0 +1,511 @@
+import java.io.*;
+import java.util.*;
+
+public class Main {
+    public static final String BOLD = "\u001B[1m";
+    public static final String RESET = "\u001B[0m";
+    public static final String GREEN = "\u001B[92m";
+    public static final String RED = "\u001B[31m";
+    public static final String BLUE = "\u001B[34m";
+    public static final String YELLOW = "\u001B[33m";
+    public static final String CYAN = "\u001B[36m";
+    public static final String PURPLE = "\u001B[35m";
+
+    public static void main(String[] args) {
+        System.out.println(GREEN + "");
+        printHeader("Welcome to Student Attendance System");
+        System.out.println(GREEN + "" + RESET);
+        System.out.println("* Please Login to the System *");
+        login();
+    }
+
+    public static void printHeader(String title) {
+        System.out.println(BOLD + BLUE + "=".repeat(50));
+        System.out.println(centerText(title, 50));
+        System.out.println("=".repeat(50) + RESET);
+    }
+
+    public static String centerText(String text, int width) {
+        if (text.length() >= width) {
+            return text;
+        }
+        int padding = (width - text.length()) / 2;
+        return " ".repeat(padding) + text + " ".repeat(width - text.length() - padding);
+    }
+
+    public static void login() {
+        Scanner sc = new Scanner(System.in);
+        System.out.print(CYAN + "Username: " + RESET);
+        String username = sc.nextLine();
+        System.out.print(CYAN + "Password: " + RESET);
+        String password = sc.nextLine();
+
+        if (!username.isEmpty() && !password.isEmpty()) {
+            userCheck(username, password);
+        } else {
+            System.out.println(RED + "Please enter both username and password!" + RESET);
+            login();
+        }
+    }
+
+    public static void userCheck(String username, String password) {
+        if (username.equals("Admin") && password.equals("123")) {
+            System.out.println(GREEN + "\nLogin Successful!" + RESET);
+            menu();
+        } else {
+            System.out.println(RED + "\nLogin Failed, Try Again!" + RESET);
+            login();
+        }
+    }
+
+    public static void menu() {
+        Scanner sc = new Scanner(System.in);
+
+        printHeader("MAIN MENU");
+        System.out.println(YELLOW + "1. Add Students");
+        System.out.println("2. Mark Attendance");
+        System.out.println("3. View Attendance");
+        System.out.println("4. Total Present Days");
+        System.out.println("5. Generate Attendance Report");
+        System.out.println("6. Remove Student");
+        System.out.println("7. Exit" + RESET);
+
+        System.out.print("\nEnter your choice (1-7): ");
+        String choice = sc.nextLine();
+
+        switch (choice) {
+            case "1":
+                addStudent();
+                break;
+            case "2":
+                markAttendance();
+                break;
+            case "3":
+                viewAttendance();
+                break;
+            case "4":
+                totalPresentDays();
+                break;
+            case "5":
+                generateReport();
+                break;
+            case "6":
+                removeStudent();
+                break;
+            case "7":
+                System.out.println(GREEN + "Thank you for using the system. Goodbye!" + RESET);
+                System.exit(0);
+                break;
+            default:
+                System.out.println(RED + "Invalid choice! Please enter a number between 1-7." + RESET);
+                menu();
+        }
+    }
+
+    public static void addStudent() {
+        Scanner sc = new Scanner(System.in);
+        printHeader("ADD NEW STUDENT");
+
+        System.out.print("Enter Student ID: ");
+        int studentId;
+        try {
+            studentId = sc.nextInt();
+            sc.nextLine(); 
+        } catch (InputMismatchException e) {
+            System.out.println(RED + "Invalid student ID. Please enter a number." + RESET);
+            sc.nextLine(); 
+            addStudent();
+            return;
+        }
+
+          try (BufferedReader reader = new BufferedReader(new FileReader("Student.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("StudentID=" + studentId + ",")) {
+                    System.out.println(RED + "Student ID already exists!" + RESET);
+                    menu();
+                    return;
+                }
+            }
+        } catch (IOException e) {
+        }
+
+        System.out.print("Enter Student Name: ");
+        String name = sc.nextLine();
+
+        try (FileWriter writer = new FileWriter("Student.txt", true)) {
+            writer.append("StudentID=" + studentId + ", name=" + name + "\n");
+            System.out.println(GREEN + "\nStudent record added successfully!" + RESET);
+
+            System.out.println(BLUE + "+------------+----------------------+");
+            System.out.println("| Student ID | Student Name         |");
+            System.out.println("+------------+----------------------+");
+            System.out.printf("| %-10d | %-20s |\n", studentId, name);
+            System.out.println("+------------+----------------------+" + RESET);
+        } catch (IOException e) {
+            System.out.println(RED + "Error saving student: " + e.getMessage() + RESET);
+        }
+        menu();
+    }
+
+    public static void markAttendance() {
+        Scanner sc = new Scanner(System.in);
+        printHeader("MARK ATTENDANCE");
+        System.out.print("Enter Date (YYYY-MM-DD): ");
+        String date = sc.nextLine();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader("Student.txt"))) {
+            System.out.println("\n" + YELLOW + BOLD + "Marking Attendance for " + date + RESET);
+            System.out.println(BLUE + "-".repeat(60) + RESET);
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(", ");
+                if (parts.length == 2) {
+                    int studentID = Integer.parseInt(parts[0].split("=")[1]);
+                    String name = parts[1].split("=")[1];
+
+                    System.out.println("\n" + CYAN + "Student ID: " + studentID);
+                    System.out.println("Student Name: " + name + RESET);
+                    System.out.print("Status (P=Present, A=Absent): ");
+
+                    String attendance = sc.nextLine().toUpperCase();
+                    while (!attendance.equals("P") && !attendance.equals("A")) {
+                        System.out.println(RED + "Invalid input. Please enter P for present or A for absent." + RESET);
+                        System.out.print("Status (P=Present, A=Absent): ");
+                        attendance = sc.nextLine().toUpperCase();
+                    }
+
+                    String status = attendance.equals("P") ? "1" : "0";
+
+                    try (FileWriter writer = new FileWriter("Attendance.txt", true)) {
+                        writer.append("StudentID=" + studentID + ", name=" + name +
+                                ", date=" + date + ", Attend=" + status + "\n");
+                        System.out.println(GREEN + "Attendance marked successfully!" + RESET);
+                    } catch (IOException e) {
+                        System.out.println(RED + "Error saving attendance: " + e.getMessage() + RESET);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.out.println(RED + "Error reading student file: " + e.getMessage() + RESET);
+        }
+        menu();
+    }
+
+    public static void viewAttendance() {
+        Scanner sc = new Scanner(System.in);
+        printHeader("VIEW ATTENDANCE");
+        System.out.print("Enter Date (YYYY-MM-DD): ");
+        String date = sc.nextLine();
+
+        boolean found = false;
+        try (BufferedReader reader = new BufferedReader(new FileReader("Attendance.txt"))) {
+            System.out.println("\n" + YELLOW + BOLD + "Attendance for " + date + ":" + RESET);
+            System.out.println(PURPLE + "+------------+----------------------+------------+");
+            System.out.println("| Student ID | Student Name         | Status     |");
+            System.out.println("+------------+----------------------+------------+");
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("date=" + date)) {
+                    String[] parts = line.split(", ");
+                    String studentId = parts[0].split("=")[1];
+                    String name = parts[1].split("=")[1];
+                    String attendStatus = parts[3].split("=")[1];
+
+                    System.out.printf("| %-10s | %-20s | %-10s |\n",
+                            studentId,
+                            name,
+                            attendStatus.equals("1") ? GREEN + "Present" + PURPLE : RED + "Absent" + PURPLE);
+                    found = true;
+                }
+            }
+
+            System.out.println("+------------+----------------------+------------+" + RESET);
+
+            if (!found) {
+                System.out.println(RED + "No attendance found for the given date!" + RESET);
+            }
+        } catch (IOException e) {
+            System.out.println(RED + "Error reading attendance file: " + e.getMessage() + RESET);
+        }
+        menu();
+    }
+
+    public static void totalPresentDays() {
+        Scanner sc = new Scanner(System.in);
+        printHeader("TOTAL PRESENT DAYS");
+        System.out.print("Enter Student ID: ");
+
+        int studentId;
+        try {
+            studentId = sc.nextInt();
+            sc.nextLine(); 
+        } catch (InputMismatchException e) {
+            System.out.println(RED + "Invalid student ID. Please enter a number." + RESET);
+            sc.nextLine(); 
+            totalPresentDays();
+            return;
+        }
+
+        int presentDays = 0;
+        int totalDays = 0;
+        String studentName = "";
+
+        try (BufferedReader reader = new BufferedReader(new FileReader("Attendance.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(", ");
+                int id = Integer.parseInt(parts[0].split("=")[1]);
+                String attendStatus = parts[3].split("=")[1];
+
+                if (id == studentId) {
+                    totalDays++;
+                    if (attendStatus.equals("1")) {
+                        presentDays++;
+                    }
+                    if (studentName.isEmpty()) {
+                        studentName = parts[1].split("=")[1];
+                    }
+                }
+            }
+
+            if (totalDays > 0) {
+                System.out.println("\n" + YELLOW + BOLD + "Attendance Summary:" + RESET);
+                System.out.println(CYAN + "+----------------------+------------+------------+------------+");
+                System.out.println("| Student Name         | Student ID | Present    | Total Days |");
+                System.out.println("+----------------------+------------+------------+------------+");
+                System.out.printf("| %-20s | %-10d | %-10d | %-10d |\n",
+                        studentName, studentId, presentDays, totalDays);
+                System.out.println("+----------------------+------------+------------+------------+");
+
+                double percentage = (presentDays * 100.0 / totalDays);
+                String color = percentage >= 75 ? GREEN : percentage >= 50 ? YELLOW : RED;
+                System.out.printf(color + "Attendance Percentage: %.2f%%\n" + RESET, percentage);
+            } else {
+                System.out.println(RED + "No attendance records found for student ID: " + studentId + RESET);
+            }
+        } catch (IOException e) {
+            System.out.println(RED + "Error reading attendance file: " + e.getMessage() + RESET);
+        }
+        menu();
+    }
+
+    public static void generateReport() {
+        printHeader("ATTENDANCE REPORT");
+        
+        try {
+            Set<String> uniqueDates = new TreeSet<>();
+            try (BufferedReader reader = new BufferedReader(new FileReader("Attendance.txt"))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] parts = line.split(", ");
+                    if (parts.length >= 4) {
+                        String date = parts[2].split("=")[1];
+                        uniqueDates.add(date);
+                    }
+                }
+            }
+
+            if (uniqueDates.isEmpty()) {
+                System.out.println(RED + "No attendance records found to generate report!" + RESET);
+                menu();
+                return;
+            }
+
+            System.out.println(BOLD + BLUE + "STUDENT ATTENDANCE REPORT");
+            System.out.println("=".repeat(50) + RESET);
+
+          
+            for (String date : uniqueDates) {
+                System.out.println("\n" + YELLOW + BOLD + "Date: " + date + RESET);
+                System.out.println(PURPLE + "-".repeat(50));
+                System.out.printf("%-10s %-20s %-10s\n", "StudentID", "Name", "Status");
+                System.out.println("-".repeat(50) + RESET);
+
+                try (BufferedReader reader = new BufferedReader(new FileReader("Attendance.txt"))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.contains("date=" + date)) {
+                            String[] parts = line.split(", ");
+                            String studentId = parts[0].split("=")[1];
+                            String name = parts[1].split("=")[1];
+                            String status = parts[3].split("=")[1].equals("1") ? 
+                                GREEN + "Present" + RESET : RED + "Absent" + RESET;
+
+                            System.out.printf("%-10s %-20s %-10s\n", 
+                                    studentId, name, status);
+                        }
+                    }
+                }
+            }
+
+            
+            System.out.println("\n" + BOLD + BLUE + "ATTENDANCE SUMMARY");
+            System.out.println("=".repeat(50) + RESET);
+            System.out.printf("%-10s %-20s %-10s %-10s %-10s\n", 
+                    "StudentID", "Name", "Present", "Absent", "Percentage");
+            System.out.println("-".repeat(60));
+
+            
+            Map<Integer, String> students = new HashMap<>();
+            try (BufferedReader reader = new BufferedReader(new FileReader("Student.txt"))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] parts = line.split(", ");
+                    int id = Integer.parseInt(parts[0].split("=")[1]);
+                    String name = parts[1].split("=")[1];
+                    students.put(id, name);
+                }
+            }
+
+            
+            for (Map.Entry<Integer, String> entry : students.entrySet()) {
+                int studentId = entry.getKey();
+                String name = entry.getValue();
+                int present = 0;
+                int total = 0;
+
+                try (BufferedReader reader = new BufferedReader(new FileReader("Attendance.txt"))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.startsWith("StudentID=" + studentId + ",")) {
+                            total++;
+                            if (line.contains("Attend=1")) {
+                                present++;
+                            }
+                        }
+                    }
+                }
+
+                double percentage = total > 0 ? (present * 100.0 / total) : 0;
+                String color = percentage >= 75 ? GREEN : percentage >= 50 ? YELLOW : RED;
+                
+                System.out.printf("%-10d %-20s %-10d %-10d " + color + "%-10.2f%%\n" + RESET, 
+                        studentId, name, present, (total - present), percentage);
+            }
+
+            System.out.println("\n" + GREEN + "Attendance report generated successfully!" + RESET);
+        } catch (IOException e) {
+            System.out.println(RED + "Error generating report: " + e.getMessage() + RESET);
+        }
+        menu();
+    }
+
+    public static void removeStudent() {
+        Scanner sc = new Scanner(System.in);
+        printHeader("REMOVE STUDENT");
+        
+        System.out.print("Enter Student ID to remove: ");
+        int studentId;
+        try {
+            studentId = sc.nextInt();
+            sc.nextLine(); 
+        } catch (InputMismatchException e) {
+            System.out.println(RED + "Invalid student ID. Please enter a number." + RESET);
+            sc.nextLine(); 
+            removeStudent();
+            return;
+        }
+
+        boolean found = false;
+        String studentName = "";
+        
+        
+        try (BufferedReader reader = new BufferedReader(new FileReader("Student.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("StudentID=" + studentId + ",")) {
+                    found = true;
+                    studentName = line.split(", ")[1].split("=")[1];
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            System.out.println(RED + "Error reading student file: " + e.getMessage() + RESET);
+            menu();
+            return;
+        }
+
+        if (!found) {
+            System.out.println(RED + "Student with ID " + studentId + " not found!" + RESET);
+            menu();
+            return;
+        }
+
+       
+        System.out.print(CYAN + "Are you sure you want to remove " + studentName + " (ID: " + studentId + ")? (Y/N): " + RESET);
+        String confirm = sc.nextLine().toUpperCase();
+        if (!confirm.equals("Y")) {
+            System.out.println(YELLOW + "Student removal cancelled." + RESET);
+            menu();
+            return;
+        }
+
+       
+        try {
+            File inputFile = new File("Student.txt");
+            File tempFile = new File("Student_temp.txt");
+
+            BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.startsWith("StudentID=" + studentId + ",")) {
+                    writer.write(line + "\n");
+                }
+            }
+            writer.close();
+            reader.close();
+
+            if (inputFile.delete()) {
+                if (!tempFile.renameTo(inputFile)) {
+                    System.out.println(RED + "Error updating student file!" + RESET);
+                }
+            } else {
+                System.out.println(RED + "Error deleting student file!" + RESET);
+            }
+        } catch (IOException e) {
+            System.out.println(RED + "Error removing student: " + e.getMessage() + RESET);
+            menu();
+            return;
+        }
+
+        
+        System.out.print(CYAN + "Do you also want to remove all attendance records for this student? (Y/N): " + RESET);
+        confirm = sc.nextLine().toUpperCase();
+        if (confirm.equals("Y")) {
+            try {
+                File inputFile = new File("Attendance.txt");
+                File tempFile = new File("Attendance_temp.txt");
+
+                BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+                BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (!line.startsWith("StudentID=" + studentId + ",")) {
+                        writer.write(line + "\n");
+                    }
+                }
+                writer.close();
+                reader.close();
+
+                if (inputFile.delete()) {
+                    if (!tempFile.renameTo(inputFile)) {
+                        System.out.println(YELLOW + "Warning: Attendance file not updated properly!" + RESET);
+                    }
+                } else {
+                    System.out.println(YELLOW + "Warning: Could not delete attendance file!" + RESET);
+                }
+            } catch (IOException e) {
+                System.out.println(YELLOW + "Warning: Error removing attendance records: " + e.getMessage() + RESET);
+            }
+        }
+
+        System.out.println(GREEN + "Student " + studentName + " (ID: " + studentId + ") removed successfully!" + RESET);
+        menu();
+    }
+}
